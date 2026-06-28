@@ -1,4 +1,8 @@
 
+Version 1.40  2026-06-28
+  * ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_FETCH_ALL protocol changed
+    you must upgrade your FastDFS server V6.16.0 and higher version
+
 Version 1.39  2025-12-19
   * ConnectionPool.getKey() use '-' instead of ':'
   * ConnectionManager.java: remove private AtomicInteger freeCount

@@ -353,7 +353,8 @@ public class TrackerClient {
      * @return storage server Socket object, return null if fail
      */
     public StorageServer getFetchStorage(TrackerServer trackerServer,
-                                         String groupName, String filename) throws IOException, MyException {
+            String groupName, String filename) throws IOException, MyException
+    {
         ServerInfo[] servers = this.getStorages(trackerServer, ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_FETCH_ONE,
                 groupName, filename);
         if (servers == null) {
@@ -372,7 +373,8 @@ public class TrackerClient {
      * @return storage server Socket object, return null if fail
      */
     public StorageServer getUpdateStorage(TrackerServer trackerServer,
-                                          String groupName, String filename) throws IOException, MyException {
+            String groupName, String filename) throws IOException, MyException
+    {
         ServerInfo[] servers = this.getStorages(trackerServer, ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_UPDATE,
                 groupName, filename);
         if (servers == null) {
@@ -391,7 +393,8 @@ public class TrackerClient {
      * @return storage servers, return null if fail
      */
     public ServerInfo[] getFetchStorages(TrackerServer trackerServer,
-                                         String groupName, String filename) throws IOException, MyException {
+            String groupName, String filename) throws IOException, MyException
+    {
         return this.getStorages(trackerServer, ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_FETCH_ALL,
                 groupName, filename);
     }
@@ -400,14 +403,17 @@ public class TrackerClient {
      * query storage server to download file
      *
      * @param trackerServer the tracker server
-     * @param cmd           command code, ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_FETCH_ONE or
-     *                      ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_UPDATE
+     * @param cmd           command code, values list:
+     *                        ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_FETCH_ONE
+     *                        ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_FETCH_ALL
+     *                        ProtoCommon.TRACKER_PROTO_CMD_SERVICE_QUERY_UPDATE
      * @param groupName     the group name of storage server
      * @param filename      filename on storage server
      * @return storage server Socket object, return null if fail
      */
-    protected ServerInfo[] getStorages(TrackerServer trackerServer,
-                                       byte cmd, String groupName, String filename) throws IOException, MyException {
+    protected ServerInfo[] getStorages(TrackerServer trackerServer, byte cmd,
+            String groupName, String filename) throws IOException, MyException
+    {
         byte[] header;
         byte[] bFileName;
         byte[] bGroupName;
@@ -454,33 +460,32 @@ public class TrackerClient {
 
             if ((pkgInfo.body.length >= ProtoCommon.TRACKER_QUERY_STORAGE_FETCH_IPV6_BODY_LEN) &&
                     (pkgInfo.body.length - ProtoCommon.TRACKER_QUERY_STORAGE_FETCH_IPV6_BODY_LEN) %
-                    (ProtoCommon.FDFS_IPV6_SIZE - 1) == 0)
+                    (ProtoCommon.FDFS_IPV6_SIZE - 1 + ProtoCommon.FDFS_PROTO_PKG_LEN_SIZE) == 0)
             {
                 ip_size = ProtoCommon.FDFS_IPV6_SIZE;
                 server_count += (pkgInfo.body.length - ProtoCommon.TRACKER_QUERY_STORAGE_FETCH_IPV6_BODY_LEN) /
-                    (ProtoCommon.FDFS_IPV6_SIZE - 1);
+                    (ProtoCommon.FDFS_IPV6_SIZE - 1 + ProtoCommon.FDFS_PROTO_PKG_LEN_SIZE);
             } else if ((pkgInfo.body.length - ProtoCommon.TRACKER_QUERY_STORAGE_FETCH_IPV4_BODY_LEN) %
-                    (ProtoCommon.FDFS_IPV4_SIZE - 1) == 0)
+                    (ProtoCommon.FDFS_IPV4_SIZE - 1 + ProtoCommon.FDFS_PROTO_PKG_LEN_SIZE) == 0)
             {
                 ip_size = ProtoCommon.FDFS_IPV4_SIZE;
                 server_count += (pkgInfo.body.length - ProtoCommon.TRACKER_QUERY_STORAGE_FETCH_IPV4_BODY_LEN) /
-                    (ProtoCommon.FDFS_IPV4_SIZE - 1);
+                    (ProtoCommon.FDFS_IPV4_SIZE - 1 + ProtoCommon.FDFS_PROTO_PKG_LEN_SIZE);
             } else {
                 this.errno = ProtoCommon.ERR_NO_EINVAL;
                 throw new IOException("Invalid body length: " + pkgInfo.body.length);
             }
 
-            ip_addr = new String(pkgInfo.body, ProtoCommon.FDFS_GROUP_NAME_MAX_LEN, ip_size - 1).trim();
-            int offset = ProtoCommon.FDFS_GROUP_NAME_MAX_LEN + ip_size - 1;
-
-            port = (int) ProtoCommon.buff2long(pkgInfo.body, offset);
-            offset += ProtoCommon.FDFS_PROTO_PKG_LEN_SIZE;
-
+            int offset = ProtoCommon.FDFS_GROUP_NAME_MAX_LEN;
             ServerInfo[] servers = new ServerInfo[server_count];
-            servers[0] = new ServerInfo(ip_addr, port);
-            for (int i = 1; i < server_count; i++) {
-                servers[i] = new ServerInfo(new String(pkgInfo.body, offset, ip_size - 1).trim(), port);
+            for (int i = 0; i < server_count; i++) {
+                ip_addr = new String(pkgInfo.body, offset, ip_size - 1).trim();
                 offset += ip_size - 1;
+
+                port = (int) ProtoCommon.buff2long(pkgInfo.body, offset);
+                offset += ProtoCommon.FDFS_PROTO_PKG_LEN_SIZE;
+
+                servers[i] = new ServerInfo(ip_addr, port);
             }
 
             return servers;

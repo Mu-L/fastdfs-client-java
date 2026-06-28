@@ -126,9 +126,9 @@ public class ConnectionManager {
                 connection.closeDirectly();
             }
         } catch (IOException e) {
+            e.printStackTrace();
             System.err.println("close socket[" + inetSocketAddress.getAddress().getHostAddress()
                     + ":" + inetSocketAddress.getPort() + "] error, emsg: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
